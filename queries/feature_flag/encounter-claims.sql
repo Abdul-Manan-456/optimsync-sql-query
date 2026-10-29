@@ -22,36 +22,3 @@ FROM workspace w
 WHERE COALESCE(w."isDeleted", false) = false
 ON CONFLICT (workspace_id, feature_name) DO NOTHING;
 
-
--- 2) ENABLE for an explicit list of workspaces (Clerk org ids).
-INSERT INTO feature_flag (id, workspace_id, feature_name, value, entity_type, created_at, updated_at)
-SELECT gen_random_uuid()::text, w.id, 'encounter_claims', 'ENABLE', 'WORKSPACE', now(), now()
-FROM workspace w
-WHERE w.id = ANY (ARRAY[
-  'org_xxxxxxxxxxxxxxxx',
-  'org_yyyyyyyyyyyyyyyy'
-])
-ON CONFLICT (workspace_id, feature_name)
-DO UPDATE SET value = EXCLUDED.value, entity_type = EXCLUDED.entity_type, updated_at = now();
-
-
--- 3) ENABLE for every workspace that has at least one non-void encounter.
---    Dedupe workspace_id BEFORE generating the uuid; "SELECT DISTINCT gen_random_uuid(), ..."
---    does not dedupe (each row gets a different uuid) and makes ON CONFLICT DO UPDATE
---    fail with "command cannot affect row a second time".
-INSERT INTO feature_flag (id, workspace_id, feature_name, value, entity_type, created_at, updated_at)
-SELECT gen_random_uuid()::text, t.workspace_id, 'encounter_claims', 'ENABLE', 'WORKSPACE', now(), now()
-FROM (
-  SELECT DISTINCT e.workspace_id
-  FROM encounter e
-  JOIN workspace w ON w.id = e.workspace_id
-  WHERE e.is_void = false
-    AND e.workspace_id IS NOT NULL
-    AND COALESCE(w."isDeleted", false) = false
-) t
-ON CONFLICT (workspace_id, feature_name)
-DO UPDATE SET value = EXCLUDED.value, entity_type = EXCLUDED.entity_type, updated_at = now();
-
-
--- Verify
-SELECT value, count(*) FROM feature_flag WHERE feature_name = 'encounter_claims' GROUP BY value;
