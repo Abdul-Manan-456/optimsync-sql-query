@@ -23,10 +23,10 @@ SELECT
 FROM "invoice" i
 LEFT JOIN "invoice_claim" ic ON ic.invoice_id = i.id
 WHERE i.invoice_number IN (
-  'east-side-family-0001',
-  'east-side-family-0002',
-  'east-side-family-0003',
-  'east-side-family-0004'
+  'east-side-family001',
+  'east-side-family002',
+  'east-side-family003',
+  'east-side-family004'
 )
 GROUP BY i.id, i.invoice_number
 ORDER BY i.invoice_number;
@@ -41,19 +41,19 @@ DELETE FROM "invoice_claim"
 WHERE invoice_id IN (
   SELECT id FROM "invoice"
   WHERE invoice_number IN (
-    'east-side-family-0001',
-    'east-side-family-0002',
-    'east-side-family-0003',
-    'east-side-family-0004'
+    'east-side-family001',
+    'east-side-family002',
+    'east-side-family003',
+    'east-side-family004'
   )
 );
 
 DELETE FROM "invoice"
 WHERE invoice_number IN (
-  'east-side-family-0001',
-  'east-side-family-0002',
-  'east-side-family-0003',
-  'east-side-family-0004'
+  'east-side-family001',
+  'east-side-family002',
+  'east-side-family003',
+  'east-side-family004'
 );
 
 COMMIT;   -- or run ROLLBACK instead of COMMIT if the deleted counts look wrong
